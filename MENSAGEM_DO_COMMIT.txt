@@ -1,0 +1,11 @@
+chore: estrutura inicial do projeto (models base, conexao com o banco e sync)
+
+Estrutura fornecida pelo professor para o projeto de ecommerce com 7
+tabelas obrigatorias: Usuario, Categoria, Produto, Estoque, Pedido,
+ItemPedido e Entrega.
+
+- Models Sequelize das 7 entidades (padrao codX como PK, timestamps: false)
+- Conexao com o banco MySQL via variaveis de ambiente
+- Script de sincronizacao (sync.js) que cria as tabelas a partir dos models
+- Diagramas originais do modelo logico (MySQL Workbench)
+
