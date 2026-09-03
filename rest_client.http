@@ -1,0 +1,157 @@
+### ==================================================
+### Sistema Ecommerce - Sucos Naturais
+### Arquivo de testes (extensão REST Client - VS Code)
+### Rode `npm run seed` antes, para ter dados de teste
+### ==================================================
+
+@baseUrl = http://localhost:3000
+@token = COLE_AQUI_O_TOKEN_RETORNADO_NO_LOGIN
+
+### ---------- ROTAS PÚBLICAS ----------
+
+### Login do administrador de teste (gerado pelo seed.js)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "admin@lumie.com",
+  "senha": "admin123"
+}
+
+### Cadastro de novo cliente (com CPF válido e endereço)
+POST {{baseUrl}}/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Maria Cliente",
+  "email": "maria@teste.com",
+  "senha": "123456",
+  "telefone": "11999998888",
+  "cpf": "11144477735",
+  "cep": "01310-100",
+  "logradouro": "Avenida Paulista",
+  "bairro": "Bela Vista",
+  "localidade": "São Paulo",
+  "uf": "SP",
+  "numero": "900"
+}
+
+### Listagem geral de produtos
+GET {{baseUrl}}/produtos
+
+### Consulta de produto por código
+GET {{baseUrl}}/produtos/1
+
+### Busca de produto por nome
+GET {{baseUrl}}/produtos/buscar?nome=laranja
+
+### Listagem de categorias
+GET {{baseUrl}}/categorias
+
+### Consulta de CEP via ViaCEP (proxy do backend)
+GET {{baseUrl}}/cep/01310100
+
+
+### ---------- ROTAS PRIVADAS (precisam do token) ----------
+
+### Perfil do usuário logado
+GET {{baseUrl}}/usuarios/perfil
+Authorization: Bearer {{token}}
+
+### Atualização completa do próprio cadastro
+PUT {{baseUrl}}/usuarios/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nome": "Maria Cliente Silva",
+  "email": "maria@teste.com",
+  "telefone": "11999998888",
+  "cpf": "11144477735",
+  "cep": "01310-100",
+  "logradouro": "Avenida Paulista",
+  "bairro": "Bela Vista",
+  "localidade": "São Paulo",
+  "uf": "SP",
+  "numero": "900"
+}
+
+### Finalização de pedido (checkout) - deduz estoque automaticamente
+POST {{baseUrl}}/pedidos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "itens": [
+    { "idProduto": 1, "quantidade": 2 },
+    { "idProduto": 5, "quantidade": 1 }
+  ]
+}
+
+### Histórico de pedidos do cliente logado
+GET {{baseUrl}}/pedidos/meus-pedidos
+Authorization: Bearer {{token}}
+
+### ---------- ROTAS PRIVADAS - APENAS ADMIN ----------
+
+### Cadastro de novo produto
+POST {{baseUrl}}/produtos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idCategoria": 1,
+  "nome": "Suco de Abacaxi com Hortelã 500ml",
+  "descricao": "100% natural",
+  "preco": 9.90,
+  "quantidade_atual": 20
+}
+
+### Atualização parcial (PATCH) de um produto - só o preço
+PATCH {{baseUrl}}/produtos/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "preco": 7.90
+}
+
+### Remoção de produto
+DELETE {{baseUrl}}/produtos/8
+Authorization: Bearer {{token}}
+
+### Movimentação de estoque (entrada)
+POST {{baseUrl}}/estoque
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idProduto": 4,
+  "quantidade": 30,
+  "tipoMovimento": "ENTRADA"
+}
+
+### Listagem geral de pedidos (gestão)
+GET {{baseUrl}}/pedidos
+Authorization: Bearer {{token}}
+
+### Atualização de status do pedido
+PATCH {{baseUrl}}/pedidos/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "ENVIADO",
+  "statusEntrega": "SAIU_PARA_ENTREGA"
+}
+
+### Relatório: vendas por categoria (alimenta gráfico)
+GET {{baseUrl}}/relatorios/vendas
+Authorization: Bearer {{token}}
+
+### Relatório: situação do estoque (alimenta gráfico)
+GET {{baseUrl}}/relatorios/estoque
+Authorization: Bearer {{token}}
+
+### ---------- TESTE DE ROTA PROTEGIDA SEM TOKEN (deve retornar 401) ----------
+GET {{baseUrl}}/usuarios/perfil
