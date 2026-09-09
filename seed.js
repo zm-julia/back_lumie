@@ -1,9 +1,10 @@
 const bcrypt = require('bcrypt')
 const conn = require('./db/conn')
-const { Categoria, Produto, Estoque, Usuario } = require('./models/rel')
+const { Categoria, Produto, Estoque, Usuario, Profissional, Servico, Localizacao } = require('./models/rel')
 
 async function seed() {
     try {
+        // 1. Categorias (batendo com a vitrine "Compre por categoria")
         const categorias = await Categoria.bulkCreate([
             { nome: 'Maquiagem', descricao: 'Batons, bases, paletas e muito mais' },
             { nome: 'Skincare', descricao: 'Séruns, hidratantes e cuidados com a pele' },
@@ -15,6 +16,7 @@ async function seed() {
 
         const [maquiagem, skincare, cabelos, bodyCare, acessorios, presentes] = categorias
 
+        // 2. Produtos, cada um com seu registro de estoque
         const produtos = [
             { idCategoria: maquiagem.codCategoria, nome: 'Batom Líquido Matte', preco: 59.90, estoque: 40,
               imagem: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400&q=80' },
@@ -50,13 +52,14 @@ async function seed() {
             })
         }
 
+        // 3. Usuário administrador de teste
         const senhaCriptografada = await bcrypt.hash('admin123', 10)
         await Usuario.create({
             nome: 'Administrador',
             email: 'admin@lumie.com',
             senha: senhaCriptografada,
             telefone: '(11) 90000-0000',
-            cpf: '52998224725', 
+            cpf: '52998224725', // CPF válido gerado só para teste
             tipo_usuario: 'ADMIN',
             cep: '01310-100',
             logradouro: 'Avenida Paulista',
@@ -65,6 +68,55 @@ async function seed() {
             uf: 'SP',
             numero: '1000'
         })
+
+        // 4. Profissionais em destaque (nomes batendo com a referência), cada um com
+        //    localização (pro mapa) e pelo menos um serviço (pro agendamento)
+        const profissionaisData = [
+            {
+                nome: 'Camila Rocha', especialidade: 'Maquiadora', preco_base: 150,
+                foto_url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&q=80',
+                endereco: { cep: '01310-100', logradouro: 'Avenida Paulista', bairro: 'Bela Vista', localidade: 'São Paulo', uf: 'SP', numero: '1500', latitude: -23.5613, longitude: -46.6565 },
+                servico: { nome: 'Maquiagem para eventos', preco: 150, duracao_minutos: 90 }
+            },
+            {
+                nome: 'Bianca Lima', especialidade: 'Cabeleireira', preco_base: 120,
+                foto_url: 'https://images.unsplash.com/photo-1595959183082-7b570b7e08e2?w=300&q=80',
+                endereco: { cep: '04538-133', logradouro: 'Avenida Brigadeiro Faria Lima', bairro: 'Itaim Bibi', localidade: 'São Paulo', uf: 'SP', numero: '2200', latitude: -23.5875, longitude: -46.6883 },
+                servico: { nome: 'Corte e escova', preco: 120, duracao_minutos: 60 }
+            },
+            {
+                nome: 'Juliana Mendes', especialidade: 'Dermatologista', preco_base: 200,
+                foto_url: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=300&q=80',
+                endereco: { cep: '05407-002', logradouro: 'Rua Oscar Freire', bairro: 'Jardins', localidade: 'São Paulo', uf: 'SP', numero: '800', latitude: -23.5629, longitude: -46.6708 },
+                servico: { nome: 'Consulta dermatológica', preco: 200, duracao_minutos: 45 }
+            },
+            {
+                nome: 'Lívia Castro', especialidade: 'Especialista em Penteados', preco_base: 180,
+                foto_url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300&q=80',
+                endereco: { cep: '01452-000', logradouro: 'Avenida Rebouças', bairro: 'Pinheiros', localidade: 'São Paulo', uf: 'SP', numero: '300', latitude: -23.5670, longitude: -46.6790 },
+                servico: { nome: 'Penteado para noivas', preco: 180, duracao_minutos: 120 }
+            }
+        ]
+
+        for (const p of profissionaisData) {
+            const profissionalCriado = await Profissional.create({
+                nome: p.nome,
+                especialidade: p.especialidade,
+                foto_url: p.foto_url,
+                preco_base: p.preco_base,
+                bio: `${p.nome} é ${p.especialidade.toLowerCase()} parceira LUMIÉ.`
+            })
+
+            await Localizacao.create({
+                idProfissional: profissionalCriado.codProfissional,
+                ...p.endereco
+            })
+
+            await Servico.create({
+                idProfissional: profissionalCriado.codProfissional,
+                ...p.servico
+            })
+        }
 
         console.log('--------------------------------------------------')
         console.log('Seed executado com sucesso!')
